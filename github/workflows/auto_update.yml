@@ -1,0 +1,40 @@
+YAML
+
+
+
+
+name: Auto Update 00981A Data
+
+on:
+  schedule:
+    # 國際標準時 UTC 08:00 = 台灣時間 16:00 (週一至週五盤後)
+    - cron: '0 8 * * 1-5'
+  workflow_dispatch: # 允許我們手動點擊按鈕來測試更新
+
+permissions:
+  contents: write # 允許自動化機器人把資料寫回你的 GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 複製儲存庫檔案
+      uses: actions/checkout@v3
+
+    - name: 設定 Python 環境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: 安裝爬蟲必要套件
+      run: pip install requests
+
+    - name: 執行爬蟲抓取 00981A
+      run: python scraper.py
+
+    - name: 自動將新資料推回 GitHub
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add data.json
+        git diff --quiet && git diff --staged --quiet || (git commit -m "自動更新 00981A 數據" && git push)
